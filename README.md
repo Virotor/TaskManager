@@ -12,3 +12,22 @@ TaskManager for Windows, language c#
 - Просмотр информации о процессоре, оперативной памяти, видеокартах, операционной системе
 - Просмотр графиков загрузки процессора и оперативной памяти
 
+Скриншоты программы:  
+
+Запущенные процессы:  
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/1.jpg)   
+
+Информация об оперативной памяти:   
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/2.jpg)  
+
+Информация о процессоре:  
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/3.jpg)
+
+Информация о видеокартах:    
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/4.jpg) 
+
+Информация об ОС:    
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/5.jpg)  
+
+Пример закрытия процесса:   
+![](https://github.com/Virotor/TaskManager/blob/master/Screens/6.jpg)  

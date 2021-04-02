@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,6 +49,7 @@ namespace TaskManager
             processManager.NotifyStartNewProcess += StartNewProcess;
             
             InitCharts();
+            RefreshMemory();
             InitDataTable();
             UpdateChartRAM();
             TakeInfoAboutOS();
@@ -57,10 +59,31 @@ namespace TaskManager
             TakeInfoAboutVideoAdapter();
         }
 
+
+        private async void RefreshMemory()
+        {
+            while (true)
+            {
+                await Task.Delay(1000);
+                foreach(var process in processManager.CurrentRunProcess)
+                {
+                    foreach(DataRow elem in dataTable.Rows)
+                    {
+                        if (elem.Field<UInt32>("ID") ==process.Id)
+                        {
+                            elem.SetField("Память MB",Math.Round( Convert.ToDouble(process.PrivateMemorySize64) / (1024 * 1024),2));
+                            break;
+                        }
+                    }
+                }
+                dataGridView1.Update();
+            }
+        }
+
         private void StartNewProcess(uint processId)
         {
 
-                var _ = processManager.TakeProcessById();
+                var _ = processManager.TakeNewProcesses();
                 if (_ is null || _.Count is 0)
                 {
                     return;
@@ -69,8 +92,8 @@ namespace TaskManager
                 {
                     foreach(var p  in _)
                     {
-                        dataTable.Rows.Add(p.Caption, p.ProcessId, p.Status, p.Priority, 0.0f, p.PeakVirtualSize / (1024 * 1024));
-                        dataGridView1.Update();
+                        dataTable.Rows.Add(p.ProcessName, p.Id, " ", p.BasePriority, p.PeakVirtualMemorySize64 / (1024 * 1024));
+                        //dataGridView1.Update();
                     }
                 }));
         }
@@ -134,7 +157,9 @@ namespace TaskManager
             runningProcess = processManager.GetProcessInfo();
             foreach (var elem in runningProcess)
             {
-                dataTable.Rows.Add(elem.Caption, elem.ProcessId, elem.Status, elem.Priority, 0.0f, elem.PeakVirtualSize / (1024 * 1024));
+                dataTable.Rows.Add(elem.Caption, elem.ProcessId,
+                    $"{elem.CreationDate.Substring(8, 2)}.{elem.CreationDate.Substring(10, 2)}.{elem.CreationDate.Substring(12, 2)}    {elem.CreationDate.Substring(6, 2)}.{elem.CreationDate.Substring(4, 2)}.{elem.CreationDate.Substring(0, 4)}",
+                    elem.Priority, elem.WorkingSetSize / (1024 * 1024));
             }
             dataGridView1.DataSource = dataTable;
         }
@@ -156,9 +181,8 @@ namespace TaskManager
             chartProcessor.ChartAreas[0].AxisX.Enabled = AxisEnabled.False;
             dataTable.Columns.Add("Имя", typeof(string));
             dataTable.Columns.Add("ID", typeof(UInt32));
-            dataTable.Columns.Add("Статус", typeof(string));
+            dataTable.Columns.Add("Время создания", typeof(string));
             dataTable.Columns.Add("Приоритет", typeof(UInt32));
-            dataTable.Columns.Add("ЦП%", typeof(float));
             dataTable.Columns.Add("Память MB", typeof(double));
         }
 
@@ -237,17 +261,17 @@ namespace TaskManager
         private void KillTreeProcess(object sender, EventArgs e)
         {
             Int32 data = Convert.ToInt32(dataGridView1.Rows[mouseLocation.RowIndex].Cells["ID"].Value);
-            processManager.KillProcessAndChild(processManager.GetProcessParentId(Process.GetProcessById(data)));
+            processManager.EndProcessTree(processManager.GetProcessParentId(Process.GetProcessById(data)));
         }
 
         private void OpenFilePlace(object sender, EventArgs e)
         {
-
-        }
-
-        private void запуститьНовыйПроцессToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
+            var pid = Convert.ToInt32(dataGridView1.Rows[mouseLocation.RowIndex].Cells["ID"].Value);
+            string path = processManager.Processes.Find(x => x.ProcessId == pid).ExecutablePath;
+            if (File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", " /select, " +path ));
+            }
         }
 
         private void ExitFromApp(object sender, EventArgs e)
@@ -267,14 +291,15 @@ namespace TaskManager
             }
         }
 
-        private void RunProcessByName(object sender, EventArgs e)
-        {
-            
-        }
 
         private void dataGridView1_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
         {
             mouseLocation = e;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Process.Start(processName.Text);
         }
     }
 }

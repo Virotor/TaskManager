@@ -11,7 +11,23 @@ namespace TaskManager
 {
     class ProcessManager
     {
-        List<ProcessInfo> processes = new List<ProcessInfo>();
+        private List<ProcessInfo> processes = new List<ProcessInfo>();
+        List<Process> processesOld = new List<Process>();
+
+        public IEnumerable<Process> CurrentRunProcess { get
+            {
+                return Process.GetProcesses().Intersect(processesOld,new ProcessComparerMemoryUsage()).ToList();
+            } }
+
+        public List<ProcessInfo> Processes { 
+            get {
+                processes = GetProcessInfo();
+                return processes;
+            } 
+            private set {
+                processes = value;
+            }
+        }
 
         public delegate void ProcessHandler(UInt32 processId);
 
@@ -33,11 +49,17 @@ namespace TaskManager
         }
 
 
+
+
         public void DeleteProcess(int pid)
         {
             if(processes.Any(x=>x.ProcessId == pid))
             {
                 processes.Remove(processes.Find(x => x.ProcessId == pid));
+            }
+            if (processesOld.Any(x => x.Id == pid))
+            {
+                processesOld.Remove(processesOld.Find(x => x.Id == pid));
             }
         }
 
@@ -47,12 +69,10 @@ namespace TaskManager
                 new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace WITHIN 1"));
             startWatch.EventArrived += StartProcessEvent;
             startWatch.Start();
-            //startThread.Start();
              stopWatch = new ManagementEventWatcher(
                 new WqlEventQuery("SELECT * FROM Win32_ProcessStopTrace"));
             stopWatch.EventArrived += StopProcessEvent;
             stopWatch.Start();
-            //stopThread.Start();
         }
 
 
@@ -74,33 +94,36 @@ namespace TaskManager
         public List<ProcessInfo> GetProcessInfo()
         {
             processes = new List<ProcessInfo>();
-            using (var process = new ManagementObjectSearcher("Select Caption,CreationDate,ExecutablePath, Status,ParentProcessId,PeakVirtualSize,Priority,ProcessId,Name from Win32_Process").Get())
+            processesOld = Process.GetProcesses().ToList();
+            using (var process = new ManagementObjectSearcher("Select Caption,CreationDate,ExecutablePath, Status,ParentProcessId,WorkingSetSize,Priority,ProcessId,Name from Win32_Process").Get())
             {
                 foreach(var _ in process)
                 {
                     ProcessInfo temp = TakeInfoAboutProcess(_);
+                    temp.WorkingSetSize =(ulong) processesOld.Where(x => x.Id == temp.ProcessId).FirstOrDefault().WorkingSet64;
                     processes.Add(temp);
                 }
             }
-
+            
             return processes;
         }
 
         private ProcessInfo TakeInfoAboutProcess(ManagementBaseObject _)
         {
-            return new ProcessInfo()
+            return new ProcessInfo(Convert.ToInt32(_["ProcessId"]))
             {
                 Caption = _["Caption"].ToString(),
                 CreationDate = _["CreationDate"].ToString(),
                 ExecutablePath = _["ExecutablePath"] == null ? "" : _["ExecutablePath"].ToString(),
                 Status = _["Status"] == null ? "" : _["Status"].ToString(),
                 ParentProcessId = Convert.ToUInt32(_["ParentProcessId"]),
-                PeakVirtualSize = Convert.ToUInt64(_["PeakVirtualSize"]),
+               // WorkingSetSize =_["WorkingSetSize"] is null ? 0 : Convert.ToUInt64(_["WorkingSetSize"]),
                 Priority = Convert.ToUInt32(_["Priority"]),
                 ProcessId = Convert.ToUInt32(_["ProcessId"]),
                 Name = _["Name"].ToString()
             };
         }
+
 
         public void StartProcessEvent(object sender, EventArrivedEventArgs e)
         {
@@ -113,21 +136,38 @@ namespace TaskManager
             this.DeleteProcess(Convert.ToInt32(e.NewEvent.Properties["ProcessId"].Value));
         }
 
-        public  List<ProcessInfo> TakeProcessById()
+        public  List<Process> TakeNewProcesses()
         {
-            List<ProcessInfo> processInfos = new List<ProcessInfo>();
-            using (var process = new ManagementObjectSearcher($"Select Caption,CreationDate,ExecutablePath, Status,ParentProcessId,PeakVirtualSize,Priority,ProcessId from Win32_Process ").Get())
+            List<Process> processNew = Process.GetProcesses().ToList();
+            processNew = processNew.Except(processesOld,new ProcessComparer()).ToList();
+            processesOld.AddRange(processNew);
+            TakeNewProcessesInfo(processNew);
+            return processNew;
+        }
+
+        public void TakeNewProcessesInfo(List<Process> processes)
+        {
+            if (processes.Count == 0)
             {
-                foreach (var _ in process)
+                return;
+            }
+            List<ProcessInfo>  newProcesses = new List<ProcessInfo>();
+            foreach(var elem in processes)
+            {
+               using (var process = new ManagementObjectSearcher($"Select Caption,CreationDate,ExecutablePath," +
+                   $" Status,ParentProcessId,PeakVirtualSize,Priority,ProcessId," +
+                   $" Name from Win32_Process where ProcessId = {elem.Id}").Get())
                 {
-                    //processInfos.Add(TakeInfoAboutProcess(_));
+                    foreach (var _ in process)
+                    {
+                        ProcessInfo temp = TakeInfoAboutProcess(_);
+                        newProcesses.Add(temp);
+                    }
                 }
             }
-            processInfos = processInfos.Except(processes).ToList();
+           
 
-            processes.AddRange(processInfos);
-
-            return processInfos;
+            this.processes.AddRange(newProcesses);
         }
 
 
@@ -139,6 +179,17 @@ namespace TaskManager
                 process.WaitForExit();
             }
             catch (ArgumentException) { }
+        }
+
+        public void EndProcessTree(Int32 imageName)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "taskkill",
+                Arguments = $"/PID {imageName} /f /t",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            }).WaitForExit();
         }
 
         public void KillProcessAndChild(Int32 pid)

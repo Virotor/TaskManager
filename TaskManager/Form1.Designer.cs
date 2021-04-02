@@ -61,12 +61,13 @@
             this.запуститьНовыйПроцессToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.запуститьНовыйПроцессToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.выбратьФайлToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.поНазваниюToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.выходToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.infoOS = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.processName = new System.Windows.Forms.TextBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.contextMenuStrip1.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.panelVideoAdapter.SuspendLayout();
@@ -329,6 +330,8 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.button1);
+            this.tabPage1.Controls.Add(this.processName);
             this.tabPage1.Controls.Add(this.dataGridView1);
             this.tabPage1.Controls.Add(this.menuStrip1);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
@@ -377,8 +380,7 @@
             // запуститьНовыйПроцессToolStripMenuItem1
             // 
             this.запуститьНовыйПроцессToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.выбратьФайлToolStripMenuItem,
-            this.поНазваниюToolStripMenuItem});
+            this.выбратьФайлToolStripMenuItem});
             this.запуститьНовыйПроцессToolStripMenuItem1.Name = "запуститьНовыйПроцессToolStripMenuItem1";
             this.запуститьНовыйПроцессToolStripMenuItem1.Size = new System.Drawing.Size(217, 22);
             this.запуститьНовыйПроцессToolStripMenuItem1.Text = "Запустить новый процесс";
@@ -386,16 +388,9 @@
             // выбратьФайлToolStripMenuItem
             // 
             this.выбратьФайлToolStripMenuItem.Name = "выбратьФайлToolStripMenuItem";
-            this.выбратьФайлToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
+            this.выбратьФайлToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.выбратьФайлToolStripMenuItem.Text = "Выбрать файл";
             this.выбратьФайлToolStripMenuItem.Click += new System.EventHandler(this.RunProcessByOpenFile);
-            // 
-            // поНазваниюToolStripMenuItem
-            // 
-            this.поНазваниюToolStripMenuItem.Name = "поНазваниюToolStripMenuItem";
-            this.поНазваниюToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
-            this.поНазваниюToolStripMenuItem.Text = "По названию";
-            this.поНазваниюToolStripMenuItem.Click += new System.EventHandler(this.RunProcessByName);
             // 
             // выходToolStripMenuItem
             // 
@@ -447,6 +442,23 @@
             this.label3.TabIndex = 0;
             this.label3.Text = "ОС:\r\nНомер сборки:\r\nТип сборки:\r\nЧасовой пояс:\r\nВремя работы:\r\nАрхитектура:\r\nРазм" +
     "ер файла подкачки:\r\nРазмер виртуальной памяти:\r\nВерсия:";
+            // 
+            // processName
+            // 
+            this.processName.Location = new System.Drawing.Point(89, 5);
+            this.processName.Name = "processName";
+            this.processName.Size = new System.Drawing.Size(121, 20);
+            this.processName.TabIndex = 3;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(215, 3);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 4;
+            this.button1.Text = "Запустить";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // Form1
             // 
@@ -511,8 +523,9 @@
         private System.Windows.Forms.ToolStripMenuItem запуститьНовыйПроцессToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem запуститьНовыйПроцессToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem выбратьФайлToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem поНазваниюToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem выходToolStripMenuItem;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox processName;
     }
 }
 
